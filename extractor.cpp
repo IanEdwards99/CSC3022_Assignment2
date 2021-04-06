@@ -69,6 +69,9 @@ int main (int argc, char *argv[])
 	std::string line;
 	std::ifstream ifs;
 
+	fheight = 9052;
+	fwidth = 4965;
+
 	ifs.open(PGMfilename, std::ios::binary);
 	if (!ifs){std::cerr << "File open failed!" << std::endl;} //check if file exists
    	else
@@ -91,13 +94,7 @@ int main (int argc, char *argv[])
 		getline(ifs, line);
 		while (!ifs.eof()){
 			for (int y = 0; y < rows; y++){
-				ifs.read((char*)matrix[y], cols); //>> std::ws; //read ws?
-				// for (int m =0; m < cols-1; m++){
-				// 	if (matrix[y][m] == '\\' and matrix[y][m+1] == 'n'){
-				// 		std::cout << "Found a problem" << std::endl;
-				// 	}
-				// }
-				// rtrim((char*)matrix[y]);
+				ifs.read((char*)matrix[y], cols);
 			}
 		}
 		ifs.close();
@@ -112,9 +109,7 @@ int main (int argc, char *argv[])
 
 		wf << "P5" << std::endl << rows << " " << cols << std::endl << 255 << std::endl;
 		for (int i = 0; i < rows; i ++){
-			//wf << std::endl;
-			wf.write((char*)(matrix[i]), cols); //reinterpret_cast<char*>(imageseq..)
-			//wf << std::endl << std::endl;
+			wf.write((char*)(matrix[i]), cols);
 		}
 		wf.close();
 
@@ -143,31 +138,24 @@ int main (int argc, char *argv[])
 			if (fabs(g) <= 1.0){
 				float y = y1;
 				if (x1 <= x2) {
-					std::cout << fheight << " " << fwidth << std::endl;
 					
 					for (int x = x1; x <= x1; x++){
 						//find new frame_coord? Given x1 and y1 and x2 and y2. Step of 1 in x.
 						frame_coord.x = x; frame_coord.y = std::round(y); //WRITE TO VECTOR.
 						y += g; 
 						unsigned char ** frame_matrix = new unsigned char*[fheight];
-						for (int i = 0; i < fheight; i++){ //should be fheight
+						for (int i = 0; i < fheight; i++){
 							frame_matrix[i] = new unsigned char[fwidth];
-							for (int j = 0; j < fwidth; j++){ //should be fwidth
+							for (int j = 0; j < fwidth; j++){
 								frame_matrix[i][j] = matrix[i+frame_coord.y][j+frame_coord.x];
-								//std::cout << matrix[i][j];
-								//std::cout << frame_coord.y << " + " << i << " " << frame_coord.x << " + " << j << std::endl;
 							}
-							//std::cout << std::endl;
 						}
 						imageSequence.push_back(frame_matrix);
-						
-
 						g = (y2-y)/(x2-x);
-						//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
 					}
+
+					
 					std::cout << "made it" << std::endl;
-					//std::cout << (float)imageSequence[0][0][0] << std::endl;
-					// std::cout << (float)matrix[0][11] << std::endl;
 
 					int counter = 0;
 
@@ -182,10 +170,7 @@ int main (int argc, char *argv[])
 						}
 						wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
 						for (int i = 0; i < fheight; i ++){
-							//wf << std::endl;
-							wf.write(reinterpret_cast<const char*>(imageSequence[0][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
-							//wf.write((char*)matrix[i], fwidth);
-							//wf << std::endl;
+							wf.write((char*)(imageSequence[0][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
 						}
 						wf.close();
 					//}
@@ -224,16 +209,6 @@ int main (int argc, char *argv[])
 
 			}
 		}
-
-
-
-
-		// for (int i = 0; i < rows; i++){
-		// 	for (int j = 0; j < cols; j++){
-		// 		std::cout << (float)matrix[i][j] << " ";
-		// 	}
-		// 	std::cout << std::endl;
-		// }
    	}
 
 	std::cout << "Program exited." << std::endl;
