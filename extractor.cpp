@@ -93,6 +93,19 @@ int main (int argc, char *argv[])
 		}
 		ifs.close();
 
+		//check if read in correctly?
+
+		// std::ofstream wf("./output/sequence.pgm", std::ios::out | std::ios::binary);
+		// if(!wf) {
+		// 	std::cout << "Cannot open file!" << std::endl;
+		// 	return 1;
+		// }
+		// wf << "P5" << std::endl << rows << " " << cols << std::endl << 255 << std::endl;
+		// for (int i = 0; i < rows; i ++){
+		// 	wf.write((char*)(matrix[i]), cols); //reinterpret_cast<char*>(imageseq..)
+		// }
+		// wf.close();
+
 		//write data out to vector, frame by frame.
 
 		float g = 0.0;
@@ -147,20 +160,25 @@ int main (int argc, char *argv[])
 					// std::cout << (float)matrix[0][11] << std::endl;
 
 					int counter = 0;
-					char buffer[256]; sprintf(buffer, "%04d", counter);
-					std::string seqNr(buffer);
-					std::ofstream wf("./output/sequence" + seqNr, std::ios::out | std::ios::binary);
-					if(!wf) {
-						std::cout << "Cannot open file!" << std::endl;
-						return 1;
-					}
-					wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
-					// for (int k = 0; k < imageSequence.size(); k ++) {
-						for (int i = 0; i < fheight; i ++){
-							wf.write((char*)(imageSequence[0][i]), sizeof(imageSequence[0][i])); //reinterpret_cast<char*>(imageseq..)
-						}
+
+					// for (int k = 0; k < imageSequence.size(); k++){
+					// 	char buffer[256]; sprintf(buffer, "%04d", counter);
+					// 	counter += 1;
+					// 	std::string seqNr(buffer);
+					// 	std::ofstream wf("./output/sequence" + seqNr + ".pgm", std::ios::out | std::ios::binary);
+					// 	if(!wf) {
+					// 		std::cout << "Cannot open file!" << std::endl;
+					// 		return 1;
+					// 	}
+					// 	wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
+					// 	// for (int k = 0; k < imageSequence.size(); k ++) {
+					// 		for (int i = 0; i < fheight; i ++){
+					// 			wf.write((char*)(imageSequence[k][i]), sizeof(imageSequence[k][i])); //reinterpret_cast<char*>(imageseq..)
+					// 		}
+					// 	// }
+					// 	wf.close();
 					// }
-					wf.close();
+
 
 
 				}
