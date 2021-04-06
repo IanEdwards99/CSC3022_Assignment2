@@ -15,12 +15,14 @@ struct coord {
 	int y;
 };
 
+const std::string space = " \n\r\t\f\v";
+
 int main (int argc, char *argv[])
 { 
 	std::vector<unsigned char **> imageSequence; // imageSequence[i][row][col] to get i'th frame's pixel.
 	std::string PGMfilename;
 	int x1 = 0; int x2 = 0; int y1 = 0; int y2 = 0;
-	int fwidth = 0; int fheight = 0; int Twidth = 0; int Theight = 0;
+	int fwidth = 0; int fheight = 0;
 	std::vector<std::string*> operations; //each vector position has an array of two values storing the operation name and the file to save it too.
 
 	if (argc < 3) { std::cout << "Incorrect options inputted." << std::endl;}
@@ -67,15 +69,15 @@ int main (int argc, char *argv[])
 	std::string line;
 	std::ifstream ifs;
 
-	ifs.open(PGMfilename, std::ios::binary | std::ios::in);
+	ifs.open(PGMfilename, std::ios::binary);
 	if (!ifs){std::cerr << "File open failed!" << std::endl;} //check if file exists
    	else
 	{
-   		getline(ifs, line);
-		getline(ifs,line);
-		while (line[0] == '#'){ getline(ifs, line);}
+   		getline(ifs >> std::ws, line);
+		getline(ifs >> std::ws,line);
+		while (line[0] == '#'){ getline(ifs >> std::ws, line);}
 		int rows = std::stoi(line.substr(0, line.find_first_of(" ")));
-		int cols = std::stoi(line.substr(line.find_first_of(" ")+1));
+		int cols = std::stoi(line.substr(line.find_first_of(" ")+1, line.length() - line.find_first_of(" ")-1));
 		std::cout << rows << std::endl;
 		std::cout << cols << std::endl;
 
@@ -83,28 +85,38 @@ int main (int argc, char *argv[])
 		for (int i = 0; i < rows; i++){
 			matrix[i] = new unsigned char[cols];
 		}
-		getline(ifs, line);
 
+		int x = 0;
+		int y = 0;
+		getline(ifs, line);
 		while (!ifs.eof()){
-			int y = 0;
 			for (int y = 0; y < rows; y++){
-				ifs.read((char*)matrix[y], cols); //read ws?
+				ifs.read((char*)matrix[y], cols); //>> std::ws; //read ws?
+				// for (int m =0; m < cols-1; m++){
+				// 	if (matrix[y][m] == '\\' and matrix[y][m+1] == 'n'){
+				// 		std::cout << "Found a problem" << std::endl;
+				// 	}
+				// }
+				// rtrim((char*)matrix[y]);
 			}
 		}
 		ifs.close();
 
 		//check if read in correctly?
 
-		// std::ofstream wf("./output/sequence.pgm", std::ios::out | std::ios::binary);
-		// if(!wf) {
-		// 	std::cout << "Cannot open file!" << std::endl;
-		// 	return 1;
-		// }
-		// wf << "P5" << std::endl << rows << " " << cols << std::endl << 255 << std::endl;
-		// for (int i = 0; i < rows; i ++){
-		// 	wf.write((char*)(matrix[i]), cols); //reinterpret_cast<char*>(imageseq..)
-		// }
-		// wf.close();
+		std::ofstream wf("./output/sequence.pgm", std::ios::binary);
+		if(!wf) {
+			std::cout << "Cannot open file!" << std::endl;
+			return 1;
+		}
+
+		wf << "P5" << std::endl << rows << " " << cols << std::endl << 255 << std::endl;
+		for (int i = 0; i < rows; i ++){
+			//wf << std::endl;
+			wf.write((char*)(matrix[i]), cols); //reinterpret_cast<char*>(imageseq..)
+			//wf << std::endl << std::endl;
+		}
+		wf.close();
 
 		//write data out to vector, frame by frame.
 
@@ -117,38 +129,35 @@ int main (int argc, char *argv[])
 			if (y1 >= y2){ //case of starting frame below destination frame.
 				for (int y = y1; y >= y2; --y){
 					frame_coord.x = x1; frame_coord.y = y;
-					//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
+					std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
 				}
 			}
 			else if (y1 < y2){
 				for (int y = y1; y <= y2; y++){
 					frame_coord.x = x1; frame_coord.y = y;
-					//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
 				}
 			}
 		}
 		else{
 			g = fabs((y2-y1)/(x2-x1)); //initial gradient
-			// std::cout << y2 << std::endl;
-			// std::cout << y1 << std::endl;
-			// std::cout << x2 << std::endl;
-			// std::cout << x1 << std::endl;
 			if (fabs(g) <= 1.0){
 				float y = y1;
 				if (x1 <= x2) {
-					// std::cout << g << std::endl;
-					// std::cout << "testing..." << std::endl;
+					std::cout << fheight << " " << fwidth << std::endl;
 					
-					for (int x = x1; x <= x2; x++){
+					for (int x = x1; x <= x1; x++){
 						//find new frame_coord? Given x1 and y1 and x2 and y2. Step of 1 in x.
-						y += g; frame_coord.x = x; frame_coord.y = std::round(y); //WRITE TO VECTOR.
-
+						frame_coord.x = x; frame_coord.y = std::round(y); //WRITE TO VECTOR.
+						y += g; 
 						unsigned char ** frame_matrix = new unsigned char*[fheight];
-						for (int i = 0; i < fheight; i++){
+						for (int i = 0; i < fheight; i++){ //should be fheight
 							frame_matrix[i] = new unsigned char[fwidth];
-							for (int j = 0; j < fwidth; j++){
-								frame_matrix[i][j] = matrix[frame_coord.y][frame_coord.x];
+							for (int j = 0; j < fwidth; j++){ //should be fwidth
+								frame_matrix[i][j] = matrix[i+frame_coord.y][j+frame_coord.x];
+								//std::cout << matrix[i][j];
+								//std::cout << frame_coord.y << " + " << i << " " << frame_coord.x << " + " << j << std::endl;
 							}
+							//std::cout << std::endl;
 						}
 						imageSequence.push_back(frame_matrix);
 						
@@ -156,28 +165,30 @@ int main (int argc, char *argv[])
 						g = (y2-y)/(x2-x);
 						//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
 					}
-					// std::cout << (float)imageSequence[0][0][0] << std::endl;
+					std::cout << "made it" << std::endl;
+					//std::cout << (float)imageSequence[0][0][0] << std::endl;
 					// std::cout << (float)matrix[0][11] << std::endl;
 
 					int counter = 0;
 
-					// for (int k = 0; k < imageSequence.size(); k++){
-					// 	char buffer[256]; sprintf(buffer, "%04d", counter);
-					// 	counter += 1;
-					// 	std::string seqNr(buffer);
-					// 	std::ofstream wf("./output/sequence" + seqNr + ".pgm", std::ios::out | std::ios::binary);
-					// 	if(!wf) {
-					// 		std::cout << "Cannot open file!" << std::endl;
-					// 		return 1;
-					// 	}
-					// 	wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
-					// 	// for (int k = 0; k < imageSequence.size(); k ++) {
-					// 		for (int i = 0; i < fheight; i ++){
-					// 			wf.write((char*)(imageSequence[k][i]), sizeof(imageSequence[k][i])); //reinterpret_cast<char*>(imageseq..)
-					// 		}
-					// 	// }
-					// 	wf.close();
-					// }
+					//for (int k = 0; k < imageSequence.size(); k++){
+						char buffer[32]; sprintf(buffer, "%04d", counter);
+						counter += 1;
+						std::string seqNr(buffer);
+						std::ofstream wf("./output/sequence" + seqNr + ".pgm", std::ios::out | std::ios::binary);
+						if(!wf) {
+							std::cout << "Cannot open file!" << std::endl;
+							return 1;
+						}
+						wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
+						for (int i = 0; i < fheight; i ++){
+							//wf << std::endl;
+							wf.write(reinterpret_cast<const char*>(imageSequence[0][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
+							//wf.write((char*)matrix[i], fwidth);
+							//wf << std::endl;
+						}
+						wf.close();
+					//}
 
 
 
