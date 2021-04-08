@@ -17,6 +17,42 @@ struct coord {
 
 const std::string space = " \n\r\t\f\v";
 
+unsigned char **readData(std::string PGMfilename){
+	//read file data function: (args: filename)
+	std::string line;
+	std::ifstream ifs;
+
+	ifs.open(PGMfilename, std::ios::binary);
+	if (!ifs){std::cerr << "File open failed!" << std::endl;} //check if file exists
+   	else
+	{
+   		getline(ifs >> std::ws, line);
+		getline(ifs >> std::ws,line);
+		while (line[0] == '#'){ getline(ifs >> std::ws, line);}
+		int cols = std::stoi(line.substr(0, line.find_first_of(" ")));
+		int rows = std::stoi(line.substr(line.find_first_of(" ")+1, line.length() - line.find_first_of(" ")-1));
+		std::cout << cols << std::endl;
+		std::cout << rows << std::endl;
+		
+
+		unsigned char ** matrix = new unsigned char*[rows];
+		for (int i = 0; i < rows; i++){
+			matrix[i] = new unsigned char[cols];
+		}
+
+		int x = 0;
+		int y = 0;
+		getline(ifs, line);
+		while (!ifs.eof()){
+			for (int y = 0; y < rows; y++){
+				ifs.read((char*)matrix[y], cols);
+			}
+		}
+		ifs.close();
+		return matrix;
+	}
+}
+
 int main (int argc, char *argv[])
 { 
 	std::vector<unsigned char **> imageSequence; // imageSequence[i][row][col] to get i'th frame's pixel.
@@ -65,53 +101,7 @@ int main (int argc, char *argv[])
 		std::cout << operations[i][1] << std::endl;
 	}
 
-	//read file data function: (args: filename)
-	std::string line;
-	std::ifstream ifs;
-
-	fheight = 9052;
-	fwidth = 4965;
-
-	ifs.open(PGMfilename, std::ios::binary);
-	if (!ifs){std::cerr << "File open failed!" << std::endl;} //check if file exists
-   	else
-	{
-   		getline(ifs >> std::ws, line);
-		getline(ifs >> std::ws,line);
-		while (line[0] == '#'){ getline(ifs >> std::ws, line);}
-		int rows = std::stoi(line.substr(0, line.find_first_of(" ")));
-		int cols = std::stoi(line.substr(line.find_first_of(" ")+1, line.length() - line.find_first_of(" ")-1));
-		std::cout << rows << std::endl;
-		std::cout << cols << std::endl;
-
-		unsigned char ** matrix = new unsigned char*[rows];
-		for (int i = 0; i < rows; i++){
-			matrix[i] = new unsigned char[cols];
-		}
-
-		int x = 0;
-		int y = 0;
-		getline(ifs, line);
-		while (!ifs.eof()){
-			for (int y = 0; y < rows; y++){
-				ifs.read((char*)matrix[y], cols);
-			}
-		}
-		ifs.close();
-
-		//check if read in correctly?
-
-		std::ofstream wf("./output/sequence.pgm", std::ios::binary);
-		if(!wf) {
-			std::cout << "Cannot open file!" << std::endl;
-			return 1;
-		}
-
-		wf << "P5" << std::endl << rows << " " << cols << std::endl << 255 << std::endl;
-		for (int i = 0; i < rows; i ++){
-			wf.write((char*)(matrix[i]), cols);
-		}
-		wf.close();
+	unsigned char ** matrix = readData(PGMfilename);
 
 		//write data out to vector, frame by frame.
 
@@ -139,7 +129,7 @@ int main (int argc, char *argv[])
 				float y = y1;
 				if (x1 <= x2) {
 					
-					for (int x = x1; x <= x1; x++){
+					for (int x = x1; x <= x2; x++){
 						//find new frame_coord? Given x1 and y1 and x2 and y2. Step of 1 in x.
 						frame_coord.x = x; frame_coord.y = std::round(y); //WRITE TO VECTOR.
 						y += g; 
@@ -154,12 +144,10 @@ int main (int argc, char *argv[])
 						g = (y2-y)/(x2-x);
 					}
 
-					
-					std::cout << "made it" << std::endl;
 
 					int counter = 0;
 
-					//for (int k = 0; k < imageSequence.size(); k++){
+					for (int k = 0; k < imageSequence.size(); k++){
 						char buffer[32]; sprintf(buffer, "%04d", counter);
 						counter += 1;
 						std::string seqNr(buffer);
@@ -170,10 +158,10 @@ int main (int argc, char *argv[])
 						}
 						wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
 						for (int i = 0; i < fheight; i ++){
-							wf.write((char*)(imageSequence[0][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
+							wf.write((char*)(imageSequence[k][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
 						}
 						wf.close();
-					//}
+					}
 
 
 
