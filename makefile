@@ -4,8 +4,8 @@ CC=g++         # the compiler
 LIBS=-lm       # the libraries we will ref
 
 # object files to create .exe
-tags: extractor.o
-	$(CC) extractor.o -o extractor.exe $(LIBS)
+tags: FrameSequence.o extractor.o
+	$(CC) FrameSequence.o extractor.o -o extractor.exe $(LIBS)
 
 # Implicit pattern rule for compiling object files
 %.o : %.cpp   # $< is the first dependancy and $@ is the target

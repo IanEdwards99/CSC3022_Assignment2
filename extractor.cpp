@@ -3,21 +3,16 @@
 #include <iostream>   //a system header file - needed to do simple I/O
 #include <fstream>
 #include <sstream>
-//#include "FrameSequence.h"	         // our header file - contains decl of fib()
+#include "FrameSequence.h"	         // our header file 
 #include <string>
 #include <cstdlib>
 #include <vector>
 #include <cctype>
 #include <cmath>
 
-struct coord {
-	int x;
-	int y;
-};
-
 const std::string space = " \n\r\t\f\v";
 
-unsigned char **readData(std::string PGMfilename){
+unsigned char **readData(std::string PGMfilename, int * rows, int * cols){
 	//read file data function: (args: filename)
 	std::string line;
 	std::ifstream ifs;
@@ -29,23 +24,23 @@ unsigned char **readData(std::string PGMfilename){
    		getline(ifs >> std::ws, line);
 		getline(ifs >> std::ws,line);
 		while (line[0] == '#'){ getline(ifs >> std::ws, line);}
-		int cols = std::stoi(line.substr(0, line.find_first_of(" ")));
-		int rows = std::stoi(line.substr(line.find_first_of(" ")+1, line.length() - line.find_first_of(" ")-1));
-		std::cout << cols << std::endl;
-		std::cout << rows << std::endl;
+		*cols = std::stoi(line.substr(0, line.find_first_of(" ")));
+		*rows = std::stoi(line.substr(line.find_first_of(" ")+1, line.length() - line.find_first_of(" ")-1));
+		std::cout << *cols << std::endl;
+		std::cout << *rows << std::endl;
 		
 
-		unsigned char ** matrix = new unsigned char*[rows];
-		for (int i = 0; i < rows; i++){
-			matrix[i] = new unsigned char[cols];
+		unsigned char ** matrix = new unsigned char*[*rows];
+		for (int i = 0; i < *rows; i++){
+			matrix[i] = new unsigned char[*cols];
 		}
 
 		int x = 0;
 		int y = 0;
 		getline(ifs, line);
 		while (!ifs.eof()){
-			for (int y = 0; y < rows; y++){
-				ifs.read((char*)matrix[y], cols);
+			for (int y = 0; y < *rows; y++){
+				ifs.read((char*)matrix[y], *cols);
 			}
 		}
 		ifs.close();
@@ -55,9 +50,8 @@ unsigned char **readData(std::string PGMfilename){
 
 int main (int argc, char *argv[])
 { 
-	std::vector<unsigned char **> imageSequence; // imageSequence[i][row][col] to get i'th frame's pixel.
 	std::string PGMfilename;
-	int x1 = 0; int x2 = 0; int y1 = 0; int y2 = 0;
+	int x1 = 0; int x2 = 0; int y1 = 0; int y2 = 0; int * rows = new int[1]; int * cols = new int[1];
 	int fwidth = 0; int fheight = 0;
 	std::vector<std::string*> operations; //each vector position has an array of two values storing the operation name and the file to save it too.
 
@@ -77,8 +71,8 @@ int main (int argc, char *argv[])
 				i += 5;
 			}
 			else if (argv[i] == std::string("-s")){
-				fheight = std::stoi(argv[i+1]); //<---------------------------------------------- swap?
-				fwidth = std::stoi(argv[i+2]);
+				fwidth = std::stoi(argv[i+1]); //<---------------------------------------------- swap?
+				fheight = std::stoi(argv[i+2]);
 				i += 3;
 			}
 			else if (argv[i] == std::string("-w")){
@@ -101,103 +95,21 @@ int main (int argc, char *argv[])
 		std::cout << operations[i][1] << std::endl;
 	}
 
-	unsigned char ** matrix = readData(PGMfilename);
+	unsigned char ** matrix = readData(PGMfilename, rows, cols);
 
-		//write data out to vector, frame by frame.
+	std::vector<unsigned char **> storedSequences[operations.size()];
 
-		float g = 0.0;
-		
-		//float x = x1;
-		coord frame_coord = {x1, y1};
+	EDWIAN004::FrameSequence Frames = EDWIAN004::FrameSequence(PGMfilename, x1, x2, y1, y2, fwidth, fheight);
 
-		if (x1 == x2){ //Deal with case where frame must just go down or up. (cant divide by zero for gradient.)
-			if (y1 >= y2){ //case of starting frame below destination frame.
-				for (int y = y1; y >= y2; --y){
-					frame_coord.x = x1; frame_coord.y = y;
-					std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
-				}
-			}
-			else if (y1 < y2){
-				for (int y = y1; y <= y2; y++){
-					frame_coord.x = x1; frame_coord.y = y;
-				}
-			}
-		}
-		else{
-			g = fabs((y2-y1)/(x2-x1)); //initial gradient
-			if (fabs(g) <= 1.0){
-				float y = y1;
-				if (x1 <= x2) {
-					
-					for (int x = x1; x <= x2; x++){
-						//find new frame_coord? Given x1 and y1 and x2 and y2. Step of 1 in x.
-						frame_coord.x = x; frame_coord.y = std::round(y); //WRITE TO VECTOR.
-						y += g; 
-						unsigned char ** frame_matrix = new unsigned char*[fheight];
-						for (int i = 0; i < fheight; i++){
-							frame_matrix[i] = new unsigned char[fwidth];
-							for (int j = 0; j < fwidth; j++){
-								frame_matrix[i][j] = matrix[i+frame_coord.y][j+frame_coord.x];
-							}
-						}
-						imageSequence.push_back(frame_matrix);
-						g = (y2-y)/(x2-x);
-					}
+	for (int i = 0; i < operations.size(); i++){
+		std::vector<unsigned char **> imageSequence = Frames.createFrames(PGMfilename, matrix, *rows, *cols, operations[i][0]);
+		storedSequences[i] = imageSequence;
+		Frames.writeFrames(operations[i][1], storedSequences[i]);
+	}
+	
+	
 
 
-					int counter = 0;
-
-					for (int k = 0; k < imageSequence.size(); k++){
-						char buffer[32]; sprintf(buffer, "%04d", counter);
-						counter += 1;
-						std::string seqNr(buffer);
-						std::ofstream wf("./output/sequence" + seqNr + ".pgm", std::ios::out | std::ios::binary);
-						if(!wf) {
-							std::cout << "Cannot open file!" << std::endl;
-							return 1;
-						}
-						wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
-						for (int i = 0; i < fheight; i ++){
-							wf.write((char*)(imageSequence[k][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
-						}
-						wf.close();
-					}
-
-
-
-				}
-				else if (x1 > x2){
-					for (int x = x1; x >= x2; --x){
-						y += fabs(g); frame_coord.x = x; frame_coord.y = std::round(y);
-						g = (y2-y)/(x2-x);
-						//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
-					}
-				}
-			}
-			else if (fabs(g) > 1.0){
-				float x = x1;
-				g = fabs((x2-x1)/(y2-y1));
-
-				if (y1 <= y2) {
-					for (int y = y1; y <= y2; y++){
-						//find new frame_coord? Given x1 and y1 and x2 and y2. Step of 1 in x.
-						x += g; frame_coord.y = y; frame_coord.x = std::round(x);
-						g = fabs((x2-x)/(y2-y));
-						//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
-					}
-				}
-				else if (y1 > y2){
-					for (int y = y1; y >= y2; --y){
-						//find new frame_coord? Given x1 and y1 and x2 and y2. Step of 1 in x.
-						x += g; frame_coord.y = y; frame_coord.x = std::round(x);
-						g = fabs((x2-x)/(y2-y));
-						//std::cout << frame_coord.x << " " << frame_coord.y << std::endl;
-					}
-				}
-
-			}
-		}
-   	}
 
 	std::cout << "Program exited." << std::endl;
 	return 0; // always return a value to calling system
