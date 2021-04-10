@@ -32,7 +32,7 @@ namespace EDWIAN004 {
 			FrameSequence& operator=(const FrameSequence& rhs);
 			
 			std::vector<unsigned char **> createFrames(std::string filename, unsigned char** matrix, int rows, int cols, std::string operation);
-			void writeFrames(std::string filename, std::vector<unsigned char **> myimageSequence);
+			void writeFrames(std::string filename);
 
 			void setFrameSize(int fwidth, int fheight);
 			int getX1(){ return xstart ;};

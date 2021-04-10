@@ -158,10 +158,10 @@ std::vector<unsigned char **> EDWIAN004::FrameSequence::createFrames(std::string
 	return imageSequence;
 }
 
-void EDWIAN004::FrameSequence::writeFrames(std::string filename, std::vector<unsigned char **> myimageSequence){
+void EDWIAN004::FrameSequence::writeFrames(std::string filename){
 	int counter = 0;
 
-	for (int k = 0; k < myimageSequence.size(); k++){
+	for (int k = 0; k < imageSequence.size(); k++){
 		char buffer[32]; sprintf(buffer, "%04d", counter);
 		counter += 1;
 		std::string seqNr(buffer);
@@ -171,20 +171,15 @@ void EDWIAN004::FrameSequence::writeFrames(std::string filename, std::vector<uns
 		}
 		wf << "P5" << std::endl << fheight << " " << fwidth << std::endl << 255 << std::endl;
 		for (int i = 0; i < fheight; i ++){
-			wf.write((char*)(myimageSequence[k][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
+			wf.write((char*)(imageSequence[k][i]), fwidth); //reinterpret_cast<char*>(imageseq..)
 		}
 		wf.close();
 	}
 };
 
 unsigned char** EDWIAN004::FrameSequence::createMatrix(coord frame_coord, unsigned char** matrix, int rows, int cols, std::string operation){
-
-	//invert case?
 	unsigned char ** frame_matrix = new unsigned char*[fheight];
-	std::cout << operation << std::endl;
-	std::cout << rows << std::endl;
-	std::cout << cols << std::endl;
-	
+
 	for (int i = 0; i < fheight; i++){
 		frame_matrix[i] = new unsigned char[fwidth];
 		for (int j = 0; j < fwidth; j++){

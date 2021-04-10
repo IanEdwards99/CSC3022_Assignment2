@@ -99,12 +99,11 @@ int main (int argc, char *argv[])
 
 	std::vector<unsigned char **> storedSequences[operations.size()];
 
-	EDWIAN004::FrameSequence Frames = EDWIAN004::FrameSequence(PGMfilename, x1, x2, y1, y2, fwidth, fheight);
-
 	for (int i = 0; i < operations.size(); i++){
-		std::vector<unsigned char **> imageSequence = Frames.createFrames(PGMfilename, matrix, *rows, *cols, operations[i][0]);
-		storedSequences[i] = imageSequence;
-		Frames.writeFrames(operations[i][1], storedSequences[i]);
+		EDWIAN004::FrameSequence Frames = EDWIAN004::FrameSequence(PGMfilename, x1, x2, y1, y2, fwidth, fheight);
+		Frames.createFrames(PGMfilename, matrix, *rows, *cols, operations[i][0]);
+		storedSequences[i] = Frames.getImageSequence();
+		Frames.writeFrames(operations[i][1]);
 	}
 	
 	
